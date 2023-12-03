@@ -16,6 +16,7 @@ type Server struct {
 func (serv *Server) Start() {
 	http.HandleFunc("/redirect/", serv.a.RedirectURL)
 	http.HandleFunc("/short/", serv.a.UrlShortner)
+	http.HandleFunc("/metrics/", serv.a.Metrics)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 

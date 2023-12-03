@@ -44,13 +44,40 @@ func (a *API) RedirectURL(w http.ResponseWriter, r *http.Request) {
 // URLShortner returns a shorten url of the original url
 func (a *API) UrlShortner(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.String()
-	finalURL:= strings.Split(url,"/short/")[1]
-	shortURL := utils.ShortenURL(finalURL)
+	finalUrl := strings.Split(url, "/short/")[1]
+	shortUrl := utils.ShortenURL(finalUrl)
 
-	if a.db.Create(finalURL, shortURL) {
-		jsonResponse, _ := json.Marshal(map[string]string{"short_url": shortURL})
+	existingURL := a.db.GetByURL(finalUrl)
+	if existingURL != "" {
+		jsonResponse, _ := json.Marshal(map[string]string{"short_url": existingURL})
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write(jsonResponse)
+
+		return
 	}
+
+	created := a.db.Create(finalUrl, shortUrl)
+	if !created {
+		jsonResponse, _ := json.Marshal(map[string]string{"Error": "Failed to Shorten the URl!"})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(jsonResponse)
+
+		return
+	}
+
+	jsonResponse, _ := json.Marshal(map[string]string{"short_url": shortUrl})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonResponse)
+}
+
+// Metrics returns the top three domains
+func (a *API) Metrics(w http.ResponseWriter, r *http.Request) {
+	topThree := a.db.GetTopThreeDomains()
+	jsonResponse, _ := json.MarshalIndent(topThree, "", " ")
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonResponse)
 }
