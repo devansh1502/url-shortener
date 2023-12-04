@@ -4,6 +4,7 @@ import (
 	"log"
 	"sort"
 	"url-shortener/interfaces"
+	"url-shortener/models"
 	"url-shortener/utils"
 )
 
@@ -25,10 +26,6 @@ func NewStore() interfaces.Store {
 // Create this function is used to add the entry in the maps for url and shortURl
 // and also adds the entry for the metric in the metrics map
 func (db *DB) Create(url, shortURl string) bool {
-	if db.urlMap[url] != "" {
-		log.Println("Entry already present")
-		return false
-	}
 	domain := utils.GetDomain(url)
 	db.urlMap[url] = shortURl
 
@@ -68,22 +65,23 @@ func (db *DB) GetByShortURL(shortUrl string) string {
 }
 
 // GetTopThreeDomains lists down the top three most hit domains
-func (db *DB) GetTopThreeDomains() (m map[string]int) {
+func (db *DB) GetTopThreeDomains() []models.DomainMetricsCollection {
 	keys := make([]string, 0, len(db.metricsMap))
 	for k := range db.metricsMap {
 		keys = append(keys, k)
 	}
 
 	sort.SliceStable(keys, func(i, j int) bool {
-		return keys[i] > keys[j]
+		return db.metricsMap[keys[i]] > db.metricsMap[keys[j]]
 	})
 
+	var dmc []models.DomainMetricsCollection
 	i := 0
 	for _, k := range keys {
 		if i == 3 {
-			return m
+			return dmc
 		}
-		m[k] = db.metricsMap[k]
+		dmc = append(dmc, models.DomainMetricsCollection{Domain: k, Counter: db.metricsMap[k]})
 		i++
 	}
 	return nil
