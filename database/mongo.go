@@ -147,7 +147,6 @@ func (mg *MongoDB) GetTopThreeDomains() []models.DomainMetricsCollection {
 		return *metrics
 	}
 
-	fmt.Println("metrics", metrics)
 	i := 0
 	for _, metric := range *metrics {
 		if i == 3 {

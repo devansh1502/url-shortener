@@ -44,6 +44,13 @@ func (a *API) RedirectURL(w http.ResponseWriter, r *http.Request) {
 // URLShortner returns a shorten url of the original url
 func (a *API) UrlShortner(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.String()
+	if url == "" {
+		jsonResponse, _ := json.Marshal(map[string]string{"Error": "URL is Empty!"})
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(jsonResponse)
+	}
+
 	finalUrl := strings.Split(url, "/short/")[1]
 	shortUrl := utils.ShortenURL(finalUrl)
 
@@ -76,6 +83,8 @@ func (a *API) UrlShortner(w http.ResponseWriter, r *http.Request) {
 // Metrics returns the top three domains
 func (a *API) Metrics(w http.ResponseWriter, r *http.Request) {
 	topThree := a.db.GetTopThreeDomains()
+
+	// Using Marshal Indent for formatting the JSON Response
 	jsonResponse, _ := json.MarshalIndent(topThree, "", " ")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
