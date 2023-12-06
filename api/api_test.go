@@ -19,7 +19,7 @@ func TestAPI(t *testing.T) {
 	testShortURLNotFound(t)
 	testRedirectURL(t)
 	testMethod(t)
-	// testEmptyURL(t)
+	testEmptyURL(t)
 	testExistingURL(t)
 	testCreateURL(t)
 	testCreateURLFailedCase(t)
@@ -49,7 +49,7 @@ func testShortURLNotFound(t *testing.T) {
 	testAPI := NewAPI(testContext, testStore)
 
 	t.Run("Short URL not Found Redirect", func(t *testing.T) {
-		shortKey := "google.com/2LmfaLII"
+		shortKey := "google.com/7378mDnD"
 		testStore.On("GetByShortURL", shortKey).Return("")
 
 		req := httptest.NewRequest(http.MethodGet, "/redirect/"+shortKey, nil)
@@ -68,8 +68,8 @@ func testRedirectURL(t *testing.T) {
 	testAPI := NewAPI(testContext, testStore)
 
 	t.Run("Redirect Success", func(t *testing.T) {
-		shortKey := "google.com/2LmfaLII"
-		testStore.On("GetByShortURL", shortKey).Return("www.google.com")
+		shortKey := "google.com/7378mDnD"
+		testStore.On("GetByShortURL", shortKey).Return("https://www.google.com")
 
 		req := httptest.NewRequest(http.MethodGet, "/redirect/"+shortKey, nil)
 		w := httptest.NewRecorder()
@@ -132,8 +132,8 @@ func testExistingURL(t *testing.T) {
 	testAPI := NewAPI(testContext, testStore)
 
 	t.Run("Get Existing URL", func(t *testing.T) {
-		testURL := "www.google.com"
-		testStore.On("GetByURL", testURL).Return("google.com/2LmfaLII").Once()
+		testURL := "https://www.google.com"
+		testStore.On("GetByURL", testURL).Return("google.com/7378mDnD").Once()
 
 		req := httptest.NewRequest(http.MethodPost, "/short/"+testURL, nil)
 		w := httptest.NewRecorder()
@@ -145,7 +145,7 @@ func testExistingURL(t *testing.T) {
 			t.Errorf("expected error to be nil got %v", err)
 		}
 
-		exData, _ := json.Marshal(map[string]string{"short_url": "google.com/2LmfaLII"})
+		exData, _ := json.Marshal(map[string]string{"short_url": "google.com/7378mDnD"})
 		assert.Equal(t, exData, data)
 	})
 }
@@ -157,8 +157,9 @@ func testCreateURL(t *testing.T) {
 
 	t.Run("Create Short URL", func(t *testing.T) {
 		testURL := "www.google.com"
-		testStore.On("GetByURL", testURL).Return("").Once()
-		testStore.On("Create", testURL, mock.Anything).Return(true).Once()
+		shortURL := "google.com/7378mDnD"
+		testStore.On("GetByURL", "https://"+testURL).Return("").Once()
+		testStore.On("Create", "https://"+testURL, shortURL).Return(true).Once()
 
 		req := httptest.NewRequest(http.MethodPost, "/short/"+testURL, nil)
 		w := httptest.NewRecorder()
@@ -170,7 +171,7 @@ func testCreateURL(t *testing.T) {
 			t.Errorf("expected error to be nil got %v", err)
 		}
 
-		exData, _ := json.Marshal(map[string]string{"short_url": "google.com/2LmfaLII"})
+		exData, _ := json.Marshal(map[string]string{"short_url": "google.com/7378mDnD"})
 		assert.Equal(t, exData, data)
 	})
 }
@@ -181,7 +182,7 @@ func testCreateURLFailedCase(t *testing.T) {
 	testAPI := NewAPI(testContext, testStore)
 
 	t.Run("Failed to Create Short URL", func(t *testing.T) {
-		testURL := "www.google.com"
+		testURL := "https://www.google.com"
 		testStore.On("GetByURL", testURL).Return("").Once()
 		testStore.On("Create", testURL, mock.Anything).Return(false).Once()
 

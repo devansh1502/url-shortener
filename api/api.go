@@ -53,7 +53,8 @@ func (a *API) UrlShortner(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := r.URL.String()
-	if url == "" {
+	finalUrl := strings.Split(url, "/short/")[1]
+	if finalUrl == "" {
 		jsonResponse, _ := json.Marshal(map[string]string{"Error": "URL is Empty!"})
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -62,7 +63,9 @@ func (a *API) UrlShortner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	finalUrl := strings.Split(url, "/short/")[1]
+	if !strings.Contains(finalUrl, "https://") {
+		finalUrl = "https://" + finalUrl
+	}
 	shortUrl := utils.ShortenURL(finalUrl)
 
 	existingURL := a.db.GetByURL(finalUrl)
