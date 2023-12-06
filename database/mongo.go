@@ -149,12 +149,16 @@ func (mg *MongoDB) GetTopThreeDomains() []models.DomainMetricsCollection {
 
 	i := 0
 	for _, metric := range *metrics {
-		if i == 3 {
-			return result
+		if len(*metrics) > 0 && len(*metrics) <= 3 {
+			result = append(result, metric)
 		}
-		result = append(result, metric)
-		i++
+		if len(*metrics) > 3 {
+			if i == 3 {
+				return result
+			}
+			result = append(result, metric)
+			i++
+		}
 	}
-
-	return nil
+	return result
 }

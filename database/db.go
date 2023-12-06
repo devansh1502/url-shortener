@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"url-shortener/interfaces"
@@ -46,11 +47,15 @@ func (db *DB) GetByURL(url string) string {
 		return ""
 	}
 
+	if db.urlMap[url] != "" {
+		fmt.Println("Entry Already Present", db.urlMap[url])
+	}
+
 	return db.urlMap[url]
 }
 
 // GetByShortURL this function is used to get the value of the url w.r.t to the ShortURL
-func (db *DB) GetByShortURL(shortUrl string) string {
+func (db *DB) GetByShortURL(shortUrl string) (url string) {
 	if len(shortUrl) < 1 {
 		log.Println("Short url not found!")
 		return ""
@@ -58,10 +63,10 @@ func (db *DB) GetByShortURL(shortUrl string) string {
 
 	for k, v := range db.urlMap {
 		if v == shortUrl {
-			return k
+			url = k
 		}
 	}
-	return ""
+	return url
 }
 
 // GetTopThreeDomains lists down the top three most hit domains
@@ -78,11 +83,16 @@ func (db *DB) GetTopThreeDomains() []models.DomainMetricsCollection {
 	var dmc []models.DomainMetricsCollection
 	i := 0
 	for _, k := range keys {
-		if i == 3 {
-			return dmc
+		if len(keys) > 0 && len(keys) <= 3 {
+			dmc = append(dmc, models.DomainMetricsCollection{Domain: k, Counter: db.metricsMap[k]})
 		}
-		dmc = append(dmc, models.DomainMetricsCollection{Domain: k, Counter: db.metricsMap[k]})
-		i++
+		if len(keys) > 3 {
+			if i == 3 {
+				return dmc
+			}
+			dmc = append(dmc, models.DomainMetricsCollection{Domain: k, Counter: db.metricsMap[k]})
+			i++
+		}
 	}
-	return nil
+	return dmc
 }
