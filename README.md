@@ -16,7 +16,7 @@ In order to use the service using mongodb, follow below instructions:
 
 | Urls| Result|
 |----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| localhost:8080/short/https:/www.youtube.com/ | {"short_url":"youtube.com/46O6pjZf"}                                                                                    |
+| localhost:8080/short/www.youtube.com/ | {"short_url":"youtube.com/46O6pjZf"}                                                                                    |
 | localhost:8080/redirect/youtube.com/46O6pjZf | Redirects to the Original URL                                                                                           |
 | localhost:8080/metrics                       | [{"domain": "youtube.com","counter": 3},{"domain": "cricbuzz.com","counter": 2},{"domain": "mongodb.com","counter": 2}] |
 
