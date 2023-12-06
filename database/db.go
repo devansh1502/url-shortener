@@ -52,7 +52,7 @@ func (db *DB) GetByURL(url string) string {
 // GetByShortURL this function is used to get the value of the url w.r.t to the ShortURL
 func (db *DB) GetByShortURL(shortUrl string) string {
 	if len(shortUrl) < 1 {
-		log.Println("Url can not be empty!")
+		log.Println("Short url not found!")
 		return ""
 	}
 

@@ -18,6 +18,8 @@ func TestAPI(t *testing.T) {
 	testSKNotFound(t)
 	testShortURLNotFound(t)
 	testRedirectURL(t)
+	testMethod(t)
+	// testEmptyURL(t)
 	testExistingURL(t)
 	testCreateURL(t)
 	testCreateURLFailedCase(t)
@@ -29,7 +31,7 @@ func testSKNotFound(t *testing.T) {
 	testStore := mocks.NewStore(t)
 	testAPI := NewAPI(testContext, testStore)
 
-	t.Run("Missing Short Key", func(t *testing.T) {
+	t.Run("Missing Short Key Redirect", func(t *testing.T) {
 		shortKey := ""
 		req := httptest.NewRequest(http.MethodGet, "/redirect/"+shortKey, nil)
 		w := httptest.NewRecorder()
@@ -46,7 +48,7 @@ func testShortURLNotFound(t *testing.T) {
 	testStore := mocks.NewStore(t)
 	testAPI := NewAPI(testContext, testStore)
 
-	t.Run("Redirect", func(t *testing.T) {
+	t.Run("Short URL not Found Redirect", func(t *testing.T) {
 		shortKey := "google.com/2LmfaLII"
 		testStore.On("GetByShortURL", shortKey).Return("")
 
@@ -65,7 +67,7 @@ func testRedirectURL(t *testing.T) {
 	testStore := mocks.NewStore(t)
 	testAPI := NewAPI(testContext, testStore)
 
-	t.Run("Redirect", func(t *testing.T) {
+	t.Run("Redirect Success", func(t *testing.T) {
 		shortKey := "google.com/2LmfaLII"
 		testStore.On("GetByShortURL", shortKey).Return("www.google.com")
 
@@ -79,6 +81,51 @@ func testRedirectURL(t *testing.T) {
 	})
 }
 
+func testMethod(t *testing.T) {
+	testContext := context.Background()
+	testStore := mocks.NewStore(t)
+	testAPI := NewAPI(testContext, testStore)
+
+	t.Run("Wrong Method", func(t *testing.T) {
+		testURL := "www.google.com"
+
+		req := httptest.NewRequest(http.MethodGet, "/short/"+testURL, nil)
+		w := httptest.NewRecorder()
+		testAPI.UrlShortner(w, req)
+		res := w.Result()
+		defer res.Body.Close()
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Errorf("expected error to be nil got %v", err)
+		}
+
+		exData, _ := json.Marshal(map[string]string{"Error": "Method not Supported!"})
+		assert.Equal(t, exData, data)
+	})
+}
+
+func testEmptyURL(t *testing.T) {
+	testContext := context.Background()
+	testStore := mocks.NewStore(t)
+	testAPI := NewAPI(testContext, testStore)
+
+	t.Run("URL is Empty", func(t *testing.T) {
+		testURL := ""
+		req := httptest.NewRequest(http.MethodPost, "/short/"+testURL, nil)
+		w := httptest.NewRecorder()
+		testAPI.UrlShortner(w, req)
+		res := w.Result()
+		defer res.Body.Close()
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Errorf("expected error to be nil got %v", err)
+		}
+
+		exData, _ := json.Marshal(map[string]string{"Error": "URL is Empty!"})
+		assert.Equal(t, exData, data)
+	})
+}
+
 func testExistingURL(t *testing.T) {
 	testContext := context.Background()
 	testStore := mocks.NewStore(t)
@@ -86,9 +133,9 @@ func testExistingURL(t *testing.T) {
 
 	t.Run("Get Existing URL", func(t *testing.T) {
 		testURL := "www.google.com"
-		testStore.On("GetByURL", testURL).Return("google.com/2LmfaLII")
+		testStore.On("GetByURL", testURL).Return("google.com/2LmfaLII").Once()
 
-		req := httptest.NewRequest(http.MethodGet, "/short/"+testURL, nil)
+		req := httptest.NewRequest(http.MethodPost, "/short/"+testURL, nil)
 		w := httptest.NewRecorder()
 		testAPI.UrlShortner(w, req)
 		res := w.Result()
@@ -110,10 +157,10 @@ func testCreateURL(t *testing.T) {
 
 	t.Run("Create Short URL", func(t *testing.T) {
 		testURL := "www.google.com"
-		testStore.On("GetByURL", testURL).Return("")
-		testStore.On("Create", testURL, mock.Anything).Return(true)
+		testStore.On("GetByURL", testURL).Return("").Once()
+		testStore.On("Create", testURL, mock.Anything).Return(true).Once()
 
-		req := httptest.NewRequest(http.MethodGet, "/short/"+testURL, nil)
+		req := httptest.NewRequest(http.MethodPost, "/short/"+testURL, nil)
 		w := httptest.NewRecorder()
 		testAPI.UrlShortner(w, req)
 		res := w.Result()
@@ -135,10 +182,10 @@ func testCreateURLFailedCase(t *testing.T) {
 
 	t.Run("Failed to Create Short URL", func(t *testing.T) {
 		testURL := "www.google.com"
-		testStore.On("GetByURL", testURL).Return("")
-		testStore.On("Create", testURL, mock.Anything).Return(false)
+		testStore.On("GetByURL", testURL).Return("").Once()
+		testStore.On("Create", testURL, mock.Anything).Return(false).Once()
 
-		req := httptest.NewRequest(http.MethodGet, "/short/"+testURL, nil)
+		req := httptest.NewRequest(http.MethodPost, "/short/"+testURL, nil)
 		w := httptest.NewRecorder()
 		testAPI.UrlShortner(w, req)
 		res := w.Result()
@@ -164,7 +211,7 @@ func testTopThreeDomains(t *testing.T) {
 			{Domain: "google.com", Counter: 2},
 			{Domain: "infracloud.com", Counter: 2},
 		}
-		testStore.On("GetTopThreeDomains").Return(dmc)
+		testStore.On("GetTopThreeDomains").Return(dmc).Once()
 
 		req := httptest.NewRequest(http.MethodGet, "/metrics/", nil)
 		w := httptest.NewRecorder()

@@ -116,7 +116,7 @@ func (mg *MongoDB) GetByURL(url string) string {
 		return ""
 	}
 
-	fmt.Println("result", urlColl.ShortURL)
+	fmt.Println("Entry Already Present", urlColl.ShortURL)
 	return urlColl.ShortURL
 }
 
